@@ -267,6 +267,8 @@ function HndTouch(event) {
 }
 var clientX, clientY;
 var tchX, tchY;
+var xDown = null;                                                        
+var yDown = null;
 function Init() {
     let devTouch;
     if (DetectMobile() == true) 
@@ -300,20 +302,34 @@ function Init() {
             // list is the touch point that was just removed from the surface.
             deltaX = e.changedTouches[0].clientX - clientX;
             deltaY = e.changedTouches[0].clientY - clientY;
-            //REFACTOR THIS
-            if (deltaX > 0) {
-                player.x += 20;
-            } else if (deltaX < 0){
-                player.x -= 20;
-            }
-            if (deltaY > 0) {
-                player.y += 20;
-            } else if (deltaY < 0) {
-                player.y -= 20;
-            }
             // Process the data ...
             
           }, false);
+
+        cvs.addEventListener('touchmove', (event)=> {
+            var xUp = evt.touches[0].clientX;                                    
+            var yUp = evt.touches[0].clientY;
+
+            var xDiff = tchX - xUp;
+            var yDiff = tchY - yUp;
+
+            if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {/*most significant*/
+                if ( xDiff > 0 ) {
+                    player.x -= 20; 
+                } else {
+                    player.x += 20;
+                }                       
+            } else {
+                if ( yDiff > 0 ) {
+                    player.y += 20;
+                } else { 
+                    player.y -= 20;
+                }                                                                 
+            }
+            /* reset values */
+            xDown = null;
+            yDown = null;     
+        } , false);
         
         startBtn.addEventListener(devTouch, () =>  {
             ModWind.style.display = 'none';
