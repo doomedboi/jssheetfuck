@@ -269,7 +269,7 @@ function Init() {
     if ( DetectMobile() ) {
         console.log("touches");
         cvs.addEventListener("touchstart", HndTouch, false );
-        startBtn.addEventListener("touch", () =>  {
+        startBtn.addEventListener("click", () =>  {
             draw();
             spawnEntities();
         });
