@@ -10,9 +10,12 @@ if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigat
 
 var ModWind = document.querySelector('#ModalWind');
 var startBtn = document.querySelector('#startGameBtn');
+var endGameSc = document.querySelector('#endScoreUI');
 
-cvs.width = innerWidth;
-cvs.height = innerHeight;
+var GAME_START = false;
+
+cvs.width = innerWidth-100;
+cvs.height = innerHeight-100;
 // load images
 
 var bird = new Image();
@@ -41,10 +44,10 @@ class Entity {
     }
     draw(){
         ctx.drawImage(this.sprite, this.x, this.y);
-        ctx.beginPath();
-        ctx.fillStyle = 'red';
-        ctx.arc(this.getHitboxCoorX(),this.getHitboxCoorY(), this.hitbox, 0, Math.PI * 2, true);
-        ctx.fill();
+        //ctx.beginPath();
+        //ctx.fillStyle = 'red';
+        //ctx.arc(this.getHitboxCoorX(),this.getHitboxCoorY(), this.hitbox, 0, Math.PI * 2, true);
+        //ctx.fill();
     }
 
 }
@@ -120,6 +123,7 @@ var bY = 150;
 var gravity = 1.5;
 
 var score = 0;
+var best_score = 0;
 
 // audio files
 
@@ -134,10 +138,16 @@ scor.src = "sounds/score.mp3";
 function keyDownHandler(e) {
     
     if (e.code == 'ArrowRight') {
-        player.x += 20;
+        player.x += 3;
     }
     else if (e.code == 'ArrowLeft'){
-        player.x -= 20;
+        player.x -= 3;
+    }
+    else if (e.code == 'ArrowUp'){
+        player.y -= 3;
+    }
+    else if (e.code == 'ArrowDown') {
+        player.y += 3;
     }
     
 }
@@ -200,7 +210,7 @@ function draw(){
     });
 
     player.draw();
-    console.log(player.x, player.y);
+    //console.log(player.x, player.y);
     //console.log(enemies);
     Projectiles.forEach((proj, idx) => {
         proj.update();
@@ -219,10 +229,13 @@ function draw(){
         en.update(1, 1);
         const dist = Math.hypot(player.getHitboxCoorX() - en.getHitboxCoorX(),
         player.getHitboxCoorY() - en.getHitboxCoorY());
-        console.log(dist);
+        //console.log(dist);
         //handle end game
         if (dist < 30) {
             cancelAnimationFrame(animationID);
+            endGameSc.innerHTML = score;
+            ModWind.style.display = 'flex';
+            GAME_START = false;
         }
         Projectiles.forEach((projectile, projectl_idx) => {
             //distance between
@@ -240,7 +253,8 @@ function draw(){
                             }, 3)
                      );        
                 }
-
+                
+                score += en.hp % 10;
                 //no flash effect
                 console.log("touch happen");
                 setTimeout(() => {
@@ -251,14 +265,15 @@ function draw(){
         })
     });
     
+    if (score > best_score) {
+        best_score = score;
+    }
     ctx.fillStyle = "steelblue";
     ctx.font = "20px Verdana";
-    ctx.fillText("Score : "+ score, 10, 30);
+    ctx.fillText("Score: "+ score, 10, 30);
+    ctx.fillText("Best score: " + best_score,  cvs.width - 170 , 30);
+    console.log(GAME_START);
 }
-
-
-
-
 
 
 
@@ -281,6 +296,21 @@ function Init() {
         cvs.addEventListener("touchstart", (e) => {
             tchX = e.touches[0].clientX;
             tchY = e.touches[0].clientY;
+            
+        }, false );
+
+        cvs.addEventListener('touchend', function(e) {
+            var deltaX, deltaY;
+          
+            // Compute the change in X and Y coordinates.
+            // The first touch point in the changedTouches
+            // list is the touch point that was just removed from the surface.
+            deltaX = e.changedTouches[0].clientX - tchX;
+            deltaY = e.changedTouches[0].clientY - tchY;
+            if (deltaX != 0 && deltaY != 0) {
+                return;
+            }
+            // shoot
             let angle = Math.atan2(
                 tchY - player.y,
                 tchX - player.x
@@ -292,51 +322,37 @@ function Init() {
             x : Math.cos(angle),
             y : Math.sin(angle)
         }, 15 ));
-        }, false );
-
-        cvs.addEventListener('touchend', function(e) {
-            var deltaX, deltaY;
-          
-            // Compute the change in X and Y coordinates.
-            // The first touch point in the changedTouches
-            // list is the touch point that was just removed from the surface.
-            deltaX = e.changedTouches[0].clientX - clientX;
-            deltaY = e.changedTouches[0].clientY - clientY;
-            // Process the data ...
             
           }, false);
 
-        cvs.addEventListener('touchmove', (event)=> {
+        cvs.addEventListener('touchmove', (evt)=> {
             var xUp = evt.touches[0].clientX;                                    
             var yUp = evt.touches[0].clientY;
 
             var xDiff = tchX - xUp;
             var yDiff = tchY - yUp;
 
-            if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {/*most significant*/
+            /*if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {//
                 if ( xDiff > 0 ) {
-                    console.log("change x");
-                    player.x -= 20; 
+                    player.x -= 5; 
                 } else {
-                    player.x += 20;
+                    player.x += 5;
                 }                       
             } else {
                 if ( yDiff > 0 ) {
-                    player.y += 20;
+                    player.y += 5;
                 } else { 
-                    player.y -= 20;
+                    player.y -= 5;
                 }                                                                 
             }
-            /* reset values */
+            
             xDown = null;
-            yDown = null;     
+            yDown = null;  */
+            player.x += (-1) * xDiff % 3;
+            player.y += (-1) * yDiff % 3;  
         } , false);
         
-        startBtn.addEventListener(devTouch, () =>  {
-            ModWind.style.display = 'none';
-            draw();
-            spawnEntities();
-        });
+        
         
     } else {
         console.log("mouse");
@@ -344,6 +360,9 @@ function Init() {
         document.addEventListener("keydown", keyDownHandler, false );
         //for projectls
         document.addEventListener('click', (event) => {
+            if (GAME_START != true) {
+                return;
+            }
             let angle = Math.atan2(
                 event.clientY - player.y,
                 event.clientX - player.x
@@ -359,15 +378,18 @@ function Init() {
     
     
     }
-    startBtn.addEventListener(devTouch, () => {
+    startBtn.addEventListener(devTouch, () =>  {
+        //alert(GAME_START);
+        console.log('start');
+        enemies.splice(0, enemies.length);
         ModWind.style.display = 'none';
         setTimeout( ()=> {
             draw();
             spawnEntities();
-        }, 500);
+            GAME_START = true;
+        }, 50);
         
-            
-    })
+    });
     
 }
 
