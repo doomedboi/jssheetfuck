@@ -262,9 +262,11 @@ function draw(){
 
 
 
-function HndTouch() {
-
+function HndTouch(event) {
+    
 }
+var clientX, clientY;
+var tchX, tchY;
 function Init() {
     let devTouch;
     if (DetectMobile() == true) 
@@ -274,11 +276,40 @@ function Init() {
     }
     if ( DetectMobile() ) {
         console.log("touches");
-        cvs.addEventListener("touchstart", HndTouch, false );
+        cvs.addEventListener("touchstart", (e) => {
+            tchX = e.touches[0].clientX;
+            tchY = e.touches[0].clientY;
+        }, false );
+
+        cvs.addEventListener('touchend', function(e) {
+            var deltaX, deltaY;
+          
+            // Compute the change in X and Y coordinates.
+            // The first touch point in the changedTouches
+            // list is the touch point that was just removed from the surface.
+            deltaX = e.changedTouches[0].clientX - clientX;
+            deltaY = e.changedTouches[0].clientY - clientY;
+          
+            // Process the data ...
+            let angle = Math.atan2(
+                tchY - player.y,
+                tchX - player.x
+            );
+    
+    Projectiles.push(new Projectile(player.x,
+        player.y, bird, 
+        {
+            x : Math.cos(angle),
+            y : Math.sin(angle)
+        }, 15 ));
+          }, false);
+        
         startBtn.addEventListener(devTouch, () =>  {
+            ModWind.style.display = 'none';
             draw();
             spawnEntities();
         });
+        
     } else {
         console.log("mouse");
         //manip our pl
@@ -297,15 +328,19 @@ function Init() {
             y : Math.sin(angle)
         }, 15 )); 
     });
-    startBtn.addEventListener('click', () => {
+    
+    
+    }
+    startBtn.addEventListener(devTouch, () => {
+        ModWind.style.display = 'none';
         setTimeout( ()=> {
             draw();
             spawnEntities();
         }, 500);
         
-        ModWind.style.display = 'none';    
+            
     })
-    }
+    
 }
 
 Init();
