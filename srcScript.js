@@ -1,11 +1,15 @@
 var cvs = document.getElementById("canvas");
 var ctx = cvs.getContext("2d");
-
+function DetectMobile() {
 if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-    alert("mob");
+    return true;
   }else{
-    alert("not mob");
+    return false;
   }
+}
+
+var ModWind = document.querySelector('#ModalWind');
+var startBtn = document.querySelector('#startGameBtn');
 
 cvs.width = innerWidth;
 cvs.height = innerHeight;
@@ -128,7 +132,7 @@ scor.src = "sounds/score.mp3";
 
 // on key down
 function keyDownHandler(e) {
-    console.log("Im here");
+    
     if (e.code == 'ArrowRight') {
         player.x += 20;
     }
@@ -137,20 +141,7 @@ function keyDownHandler(e) {
     }
     
 }
-document.addEventListener("keydown", keyDownHandler, false );
-document.addEventListener('click', (event) => {
-    let angle = Math.atan2(
-        event.clientY - player.y,
-        event.clientX - player.x
-    );
-    
-    Projectiles.push(new Projectile(player.x,
-        player.y, bird, 
-        {
-            x : Math.cos(angle),
-            y : Math.sin(angle)
-        }, 15 )); 
-});
+
 
 function moveUp(){
     bY -= 25;
@@ -263,13 +254,52 @@ function draw(){
     ctx.fillStyle = "steelblue";
     ctx.font = "20px Verdana";
     ctx.fillText("Score : "+ score, 10, 30);
-    
-    
-    
 }
 
 
 
-draw();
-spawnEntities();
 
+
+
+
+function HndTouch() {
+
+}
+function Init() {
+    if ( DetectMobile() ) {
+        console.log("touches");
+        cvs.addEventListener("touchstart", HndTouch, false );
+        startBtn.addEventListener("touch", () =>  {
+            draw();
+            spawnEntities();
+        });
+    } else {
+        console.log("mouse");
+        //manip our pl
+        document.addEventListener("keydown", keyDownHandler, false );
+        //for projectls
+        document.addEventListener('click', (event) => {
+            let angle = Math.atan2(
+                event.clientY - player.y,
+                event.clientX - player.x
+            );
+    
+    Projectiles.push(new Projectile(player.x,
+        player.y, bird, 
+        {
+            x : Math.cos(angle),
+            y : Math.sin(angle)
+        }, 15 )); 
+    });
+    startBtn.addEventListener('click', () => {
+        setTimeout( ()=> {
+            draw();
+            spawnEntities();
+        }, 500);
+        
+        ModWind.style.display = 'none';    
+    })
+    }
+}
+
+Init();

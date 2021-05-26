@@ -6,14 +6,32 @@
   <head>
 
     <title>Something in the way</title>
-    
+    <link rel="stylesheet" href="style.css">
 
   </head>
   <style>
-   
+  p {
+    font: bold;
+  }
+  h1{
+    font: bold;
+    
+  }
+  body {
+    margin: 0;
+    background: black;
+  }
   </style>
   <body>
-  
+   <div id="ModalWind"> 
+     <div id="ModalWndInner">
+       <h1>0</h1>
+       <p>Points</p>
+       <div>
+         <button id="startGameBtn">Start Game</button>
+       </div>
+     </div>
+   </div>
    <canvas id="canvas"></canvas>
    <script src="srcScript.js"></script>
 

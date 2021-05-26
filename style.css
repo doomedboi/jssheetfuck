@@ -1,4 +1,20 @@
-.div {
-    background-color: red;
+#ModalWind {
     position: fixed;
+    color: wheat;
+    align-items: center;
+    justify-content: center;
+}
+#startGameBtn{
+    background-color: blue;
+    color: white;
+    text-align: right;
+    border-radius: 9999px ;
+}
+
+#ModalWndInner {
+    background: white;
+    max-width:max-content;
+    width:max-content;
+    padding: -6;
+    text-align: center;
 }
