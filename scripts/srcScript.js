@@ -1,6 +1,12 @@
 var cvs = document.getElementById("canvas");
 var ctx = cvs.getContext("2d");
 
+if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+    console.log("mob");
+  }else{
+    console.log("not mob");
+  }
+
 cvs.width = innerWidth;
 cvs.height = innerHeight;
 // load images
