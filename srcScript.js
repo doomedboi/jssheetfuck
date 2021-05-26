@@ -279,18 +279,6 @@ function Init() {
         cvs.addEventListener("touchstart", (e) => {
             tchX = e.touches[0].clientX;
             tchY = e.touches[0].clientY;
-        }, false );
-
-        cvs.addEventListener('touchend', function(e) {
-            var deltaX, deltaY;
-          
-            // Compute the change in X and Y coordinates.
-            // The first touch point in the changedTouches
-            // list is the touch point that was just removed from the surface.
-            deltaX = e.changedTouches[0].clientX - clientX;
-            deltaY = e.changedTouches[0].clientY - clientY;
-          
-            // Process the data ...
             let angle = Math.atan2(
                 tchY - player.y,
                 tchX - player.x
@@ -302,6 +290,29 @@ function Init() {
             x : Math.cos(angle),
             y : Math.sin(angle)
         }, 15 ));
+        }, false );
+
+        cvs.addEventListener('touchend', function(e) {
+            var deltaX, deltaY;
+          
+            // Compute the change in X and Y coordinates.
+            // The first touch point in the changedTouches
+            // list is the touch point that was just removed from the surface.
+            deltaX = e.changedTouches[0].clientX - clientX;
+            deltaY = e.changedTouches[0].clientY - clientY;
+            //REFACTOR THIS
+            if (deltaX > 0) {
+                player.x += 20;
+            } else if (deltaX < 0){
+                player.x -= 20;
+            }
+            if (deltaY > 0) {
+                player.y += 20;
+            } else if (deltaY < 0) {
+                player.y -= 20;
+            }
+            // Process the data ...
+            
           }, false);
         
         startBtn.addEventListener(devTouch, () =>  {
