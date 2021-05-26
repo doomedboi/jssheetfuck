@@ -315,6 +315,7 @@ function Init() {
 
             if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {/*most significant*/
                 if ( xDiff > 0 ) {
+                    console.log("change x");
                     player.x -= 20; 
                 } else {
                     player.x += 20;
