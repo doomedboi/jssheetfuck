@@ -266,10 +266,16 @@ function HndTouch() {
 
 }
 function Init() {
+    let devTouch;
+    if (DetectMobile() == true) 
+        devTouch = "touchstart";
+    else {
+        devTouch = "click"
+    }
     if ( DetectMobile() ) {
         console.log("touches");
         cvs.addEventListener("touchstart", HndTouch, false );
-        startBtn.addEventListener("click", () =>  {
+        startBtn.addEventListener(devTouch, () =>  {
             draw();
             spawnEntities();
         });
