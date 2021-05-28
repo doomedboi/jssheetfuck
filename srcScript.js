@@ -14,8 +14,8 @@ var endGameSc = document.querySelector('#endScoreUI');
 
 var GAME_START = false;
 
-cvs.width = innerWidth-100;
-cvs.height = innerHeight-100;
+cvs.width = innerWidth;
+cvs.height = innerHeight - 5;
 // load images
 
 var bird = new Image();
@@ -50,12 +50,27 @@ class Entity {
         //ctx.fill();
     }
 
+    IncCoordBy(x, y) {
+        this.x += x;
+        this.y += y;
+        if (this.x < 0) {
+            this.x += 30;
+        } else if (this.x >= cvs.width) {
+            this.x -= 30;
+        } else if (this.y < 0) {
+            this.y += 30;
+        } else if (this.y >= cvs.height) {
+            this.y -= 30;
+        }
+    }
+
 }
 
 class Player extends Entity {
-    constructor(x, y, sprite, hp, side, velocity, hitbox) {
+    constructor(x, y, sprite, hp, damage, side, velocity, hitbox) {
         super(x, y, sprite);
         this.hp = hp;
+        this.damage = damage;
         this.side = side;
         this.velocity = velocity;
         this.hitbox = hitbox;
@@ -111,7 +126,7 @@ class Blood extends Projectile {
 }
 
 var player = new Player(cvs.width / 2, cvs.height / 2, bird,
-    228, 1, null, 15);
+    228, 50, 1, null, 15);
 // some variables
 
 var gap = 85;
@@ -134,21 +149,24 @@ fly.src = "sounds/fly.mp3";
 scor.src = "sounds/score.mp3";
 
 
+
 // on key down
 function keyDownHandler(e) {
-    
+    let x = 0; let y = 0;
     if (e.code == 'ArrowRight') {
-        player.x += 3;
+        x = 3;
     }
-    else if (e.code == 'ArrowLeft'){
-        player.x -= 3;
+    if (e.code == 'ArrowLeft'){
+        x = -3;
     }
-    else if (e.code == 'ArrowUp'){
-        player.y -= 3;
+    if (e.code == 'ArrowUp'){
+        y = -3;
     }
-    else if (e.code == 'ArrowDown') {
-        player.y += 3;
+    if (e.code == 'ArrowDown') {
+        y = 3;
     }
+
+    player.IncCoordBy(x, y);
     
 }
 
@@ -172,6 +190,7 @@ pipe[0] = {
 
 function spawnEntities() {
     setInterval(() => {
+        
         let x;
         let y;
         if (Math.random() < 0.5) {
@@ -190,13 +209,14 @@ function spawnEntities() {
             y : Math.sin(angle)
         }
         
-        enemies.push( new Player (x, y, bird, 228, 1, velocity, 15));
+        enemies.push( new Player (x, y, bird, 100, 30, 1, velocity, 15));
     }, 1000);
 }
 
 let animationID;
 
 function draw(){
+    console.log(document.hasFocus());
     animationID = requestAnimationFrame(draw);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, cvs.width, cvs.height);
@@ -232,6 +252,7 @@ function draw(){
         //console.log(dist);
         //handle end game
         if (dist < 30) {
+            //ENABLE GOD-MODE FOR 3 sec
             cancelAnimationFrame(animationID);
             endGameSc.innerHTML = score;
             ModWind.style.display = 'flex';
@@ -253,10 +274,15 @@ function draw(){
                             }, 3)
                      );        
                 }
-                
+                alert(en.hp);
                 score += en.hp % 10;
+                en.hp -= player.damage;
+                Projectiles.splice(projectl_idx, 1);
                 //no flash effect
                 console.log("touch happen");
+                if (en.hp > 0) {
+                    return;
+                }
                 setTimeout(() => {
                     enemies.splice(enemies_idx, 1);
                     Projectiles.splice(projectl_idx, 1);
@@ -284,7 +310,10 @@ var clientX, clientY;
 var tchX, tchY;
 var xDown = null;                                                        
 var yDown = null;
+
 function Init() {
+    console.log(cvs.height);
+    console.log(cvs.width);
     let devTouch;
     if (DetectMobile() == true) 
         devTouch = "touchstart";
@@ -311,6 +340,9 @@ function Init() {
                 return;
             }
             // shoot
+            if (GAME_START != true) {
+                return;
+            }
             let angle = Math.atan2(
                 tchY - player.y,
                 tchX - player.x
@@ -348,8 +380,9 @@ function Init() {
             
             xDown = null;
             yDown = null;  */
-            player.x += (-1) * xDiff % 3;
-            player.y += (-1) * yDiff % 3;  
+            player.IncCoordBy((-1) * xDiff % 2, (-1) * yDiff % 2);
+            //player.x += (-1) * xDiff % 2;
+            //player.y += (-1) * yDiff % 2;  
         } , false);
         
         
@@ -385,6 +418,8 @@ function Init() {
         ModWind.style.display = 'none';
         setTimeout( ()=> {
             draw();
+            player.x = cvs.width / 2;
+            player.y = cvs.height / 2;
             spawnEntities();
             GAME_START = true;
         }, 50);
