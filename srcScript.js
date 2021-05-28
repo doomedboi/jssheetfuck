@@ -18,6 +18,9 @@ cvs.width = innerWidth;
 cvs.height = innerHeight - 5;
 // load images
 
+var obstacles = [];
+
+
 var bird = new Image();
 var bg = new Image();
 var fg = new Image();
@@ -44,6 +47,7 @@ class Entity {
     }
     draw(){
         ctx.drawImage(this.sprite, this.x, this.y);
+        /*draw hitbox */
         //ctx.beginPath();
         //ctx.fillStyle = 'red';
         //ctx.arc(this.getHitboxCoorX(),this.getHitboxCoorY(), this.hitbox, 0, Math.PI * 2, true);
@@ -76,11 +80,39 @@ class Player extends Entity {
         this.hitbox = hitbox;
     }
 
+    Hurt (damage) {
+        this.hp -= damage;
+        }
+
     update() {
         this.draw();
         this.x = this.x + this.velocity.x;
         this.y = this.y + this.velocity.y;
-        
+    }
+}
+
+class ClientPlayer extends Player {
+    constructor(x, y, sprite, hp, damage, side, velocity, hitbox) {
+        super(x, y, sprite);
+        this.hp = hp;
+        this.damage = damage;
+        this.side = side;
+        this.velocity = velocity;
+        this.hitbox = hitbox;
+        this.godmode = false;
+    }
+
+    Hurt(damage) {
+        if (this.godmode == true) {
+            return;
+        } else {
+            this.godmode = true;
+            setTimeout( ()=> {
+                this.godmode = false;
+                this.hp -= damage;
+            }, 3000);
+            
+        }
     }
 }
 
@@ -100,6 +132,14 @@ class Projectile extends Entity {
         //  ctx.fill();
     }
 } 
+
+class Obstacle extends Entity {
+    constructor(x, y, sprite, hitbox) {
+        super(x, y, sprite, hitbox);
+        this.xyz = 1;
+    }
+
+}
 
 class Blood extends Projectile {
     constructor(x, y, velocity, hitbox) {
@@ -125,8 +165,8 @@ class Blood extends Projectile {
     }
 }
 
-var player = new Player(cvs.width / 2, cvs.height / 2, bird,
-    228, 50, 1, null, 15);
+var player = new ClientPlayer(cvs.width / 2, cvs.height / 2, bird,
+    3, 50, 1, null, 15);
 // some variables
 
 var gap = 85;
@@ -190,7 +230,9 @@ pipe[0] = {
 
 function spawnEntities() {
     setInterval(() => {
-        
+        if (enemies.length > 15) {
+            return;
+        }
         let x;
         let y;
         if (Math.random() < 0.5) {
@@ -209,14 +251,17 @@ function spawnEntities() {
             y : Math.sin(angle)
         }
         
-        enemies.push( new Player (x, y, bird, 100, 30, 1, velocity, 15));
+        enemies.push( new Player (x, y, bird, 100, 1, 1, velocity, 15));
     }, 1000);
 }
 
 let animationID;
-
+setInterval( ()=> {
+    console.log(player.hp);
+}, 2000);
+var invisForGM = false;
 function draw(){
-    console.log(document.hasFocus());
+    //console.log(document.hasFocus());
     animationID = requestAnimationFrame(draw);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, cvs.width, cvs.height);
@@ -230,6 +275,7 @@ function draw(){
     });
 
     player.draw();
+    
     //console.log(player.x, player.y);
     //console.log(enemies);
     Projectiles.forEach((proj, idx) => {
@@ -241,7 +287,17 @@ function draw(){
             }, 0)
         }
     });
-    //console.log(Projectiles);
+
+    obstacles.forEach( (obst, idx) => {
+        obst.draw();
+        const dist = Math.hypot(player.getHitboxCoorX() - obst.getHitboxCoorX(),
+        player.getHitboxCoorY() - obst.getHitboxCoorY());
+        if (dist < 30) {
+            player.Hurt(1);
+            obstacles.splice(idx, 1);
+        }
+    });
+    
     enemies.forEach((en, enemies_idx) => {
         if (en.x > 2500 || en.x < -300 || en.y > 2500 || en.y < -300)
             enemies.splice(enemies_idx, 1);
@@ -252,11 +308,18 @@ function draw(){
         //console.log(dist);
         //handle end game
         if (dist < 30) {
+            console.log("touch happ");
             //ENABLE GOD-MODE FOR 3 sec
+            if (player.hp > 1 && player.godmode != true) {
+               player.Hurt(en.damage);
+            } else if (player.hp <= 1) {
+            player.Hurt(en.damage);
             cancelAnimationFrame(animationID);
             endGameSc.innerHTML = score;
             ModWind.style.display = 'flex';
             GAME_START = false;
+            score = 0;
+            }
         }
         Projectiles.forEach((projectile, projectl_idx) => {
             //distance between
@@ -274,8 +337,9 @@ function draw(){
                             }, 3)
                      );        
                 }
-                alert(en.hp);
-                score += en.hp % 10;
+                
+                score += en.hp / 10;
+                console.log(score);
                 en.hp -= player.damage;
                 Projectiles.splice(projectl_idx, 1);
                 //no flash effect
@@ -298,7 +362,7 @@ function draw(){
     ctx.font = "20px Verdana";
     ctx.fillText("Score: "+ score, 10, 30);
     ctx.fillText("Best score: " + best_score,  cvs.width - 170 , 30);
-    console.log(GAME_START);
+    //console.log(GAME_START);
 }
 
 
@@ -312,8 +376,8 @@ var xDown = null;
 var yDown = null;
 
 function Init() {
-    console.log(cvs.height);
-    console.log(cvs.width);
+    obstacles.push( new Obstacle(300, 300, bird, 50));
+    obstacles.push( new Obstacle(300, 300, bird, 50));
     let devTouch;
     if (DetectMobile() == true) 
         devTouch = "touchstart";
@@ -415,6 +479,9 @@ function Init() {
         //alert(GAME_START);
         console.log('start');
         enemies.splice(0, enemies.length);
+        Projectiles.splice(0, Projectiles.length);
+        player.hp = 3;
+        console.log("залупа нажата блять");
         ModWind.style.display = 'none';
         setTimeout( ()=> {
             draw();
