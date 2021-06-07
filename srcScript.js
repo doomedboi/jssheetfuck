@@ -7,7 +7,7 @@ if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigat
     return false;
   }
 }
-
+var score_for_boss = 30;
 var ModWind = document.querySelector('#ModalWind');
 var startBtn = document.querySelector('#startGameBtn');
 var endGameSc = document.querySelector('#endScoreUI');
@@ -25,11 +25,29 @@ var bird = new Image();
 var bg = new Image();
 var fg = new Image();
 var kurt = new Image();
+var bird_enemy = new Image();
+var bird_hurted = new Image();
+var bird_boss = new Image();
 
 bird.src = "images/bird.png";
 bg.src = "images/bg.png";
 fg.src = "images/fg.png";
 kurt.src = "images/kurt.png";
+bird_enemy.src = "images/bird_enemy.png";
+bird_hurted.src = "images/bird_hurted.png";
+bird_boss.src = "images/bird_boss.png";
+
+var pew = new Audio();
+var bgS = new Audio();
+var touch = new Audio();
+var damageS = new Audio();
+var boss_music = new Audio();
+
+pew.src = "sounds/pewpew.mp3";
+bgS.src = "sounds/back.mp3";
+touch.src = "sounds/touch.mp3";
+damageS.src = "sounds/damage.mp3";
+boss_music.src = "sounds/boss_music.mp3";
 
 class Entity {
     constructor(x, y, sprite, hitbox){
@@ -70,6 +88,12 @@ class Entity {
 
 }
 
+
+var bird_b;
+
+function SpawnBoss() { 
+}
+
 class Player extends Entity {
     constructor(x, y, sprite, hp, damage, side, velocity, hitbox) {
         super(x, y, sprite);
@@ -107,9 +131,11 @@ class ClientPlayer extends Player {
             return;
         } else {
             this.godmode = true;
+            this.sprite = bird_hurted;
             setTimeout( ()=> {
                 this.godmode = false;
                 this.hp -= damage;
+                this.sprite = bird;
             }, 3000);
             
         }
@@ -166,7 +192,7 @@ class Blood extends Projectile {
 }
 
 var player = new ClientPlayer(cvs.width / 2, cvs.height / 2, bird,
-    3, 50, 1, null, 15);
+    3, 40, 1, null, 15);
 // some variables
 
 var gap = 85;
@@ -210,6 +236,7 @@ function keyDownHandler(e) {
     
 }
 
+var IsBossDraw = false;
 
 function moveUp(){
     bY -= 25;
@@ -223,12 +250,35 @@ var pipe = [];
 var Projectiles = [];
 var Bloods = [];
 var enemies = [];
-pipe[0] = {
-    x : cvs.width,
-    y : 0
-};
 
-function spawnEntities() {
+var boss_time = false;
+
+function spawnBoss() {
+    boss_time = true;
+    boss_music.play();
+    for (let index = 0; index < 20; index++) {
+        let x;
+        let y;
+        if (Math.random() < 0.5) {
+            x = Math.random() < 0.5 ? 0 - 20 :  cvs.width + 30;
+            y = Math.random() < 0.5 ? 0 - 20:  cvs.height + 30;
+        } else {
+            x = Math.random() * cvs.width;
+            y = Math.random() < 0.5 ? 0 - 20 : cvs.height + 30;
+        }
+
+        const angle = Math.atan2(player.y - y, 
+            player.x - x);
+
+        const velocity = {
+            x : Math.cos(angle),
+            y : Math.sin(angle)
+        }
+        
+        enemies.push( new Player (x, y, bird_boss, 100, 50, 1, velocity, 15));
+    }
+}
+function spawnEntities(spr, hp, interval) {
     setInterval(() => {
         if (enemies.length > 15) {
             return;
@@ -251,8 +301,8 @@ function spawnEntities() {
             y : Math.sin(angle)
         }
         
-        enemies.push( new Player (x, y, bird, 100, 1, 1, velocity, 15));
-    }, 1000);
+        enemies.push( new Player (x, y, spr, hp, 1, 1, velocity, 15));
+    }, interval);
 }
 
 let animationID;
@@ -260,6 +310,7 @@ setInterval( ()=> {
     console.log(player.hp);
 }, 2000);
 var invisForGM = false;
+var IsBossSpawned = false;
 function draw(){
     //console.log(document.hasFocus());
     animationID = requestAnimationFrame(draw);
@@ -308,17 +359,18 @@ function draw(){
         //console.log(dist);
         //handle end game
         if (dist < 30) {
-            console.log("touch happ");
+            touch.play();
             //ENABLE GOD-MODE FOR 3 sec
             if (player.hp > 1 && player.godmode != true) {
+                console.log("GM ENABLED");
                player.Hurt(en.damage);
             } else if (player.hp <= 1) {
-            player.Hurt(en.damage);
-            cancelAnimationFrame(animationID);
-            endGameSc.innerHTML = score;
-            ModWind.style.display = 'flex';
-            GAME_START = false;
-            score = 0;
+                player.Hurt(en.damage);
+                cancelAnimationFrame(animationID);
+                endGameSc.innerHTML = score;
+                ModWind.style.display = 'flex';
+                GAME_START = false;
+                score = 0;
             }
         }
         Projectiles.forEach((projectile, projectl_idx) => {
@@ -328,6 +380,7 @@ function draw(){
             
             // handle touch
             if (dist - en.hitbox - projectile.hitbox < 2) {
+                damageS.play();
                 for (let i = 0; i < 5; i++) {
                      Bloods.push (
                          new Blood(projectile.x, projectile. y,
@@ -358,10 +411,21 @@ function draw(){
     if (score > best_score) {
         best_score = score;
     }
+    
+    if (score >= score_for_boss && IsBossSpawned != true) {
+        IsBossSpawned = true;
+        setTimeout( ()=> {
+            spawnBoss();
+            bgS.pause();
+            console.log("BOSS TIME");
+        }, 1000);
+    }
+    
     ctx.fillStyle = "steelblue";
     ctx.font = "20px Verdana";
     ctx.fillText("Score: "+ score, 10, 30);
     ctx.fillText("Best score: " + best_score,  cvs.width - 170 , 30);
+    ctx.fillText("HP: " + player.hp, 10, 50);
     //console.log(GAME_START);
 }
 
@@ -376,8 +440,9 @@ var xDown = null;
 var yDown = null;
 
 function Init() {
-    obstacles.push( new Obstacle(300, 300, bird, 50));
-    obstacles.push( new Obstacle(300, 300, bird, 50));
+    for (let index = 0; index < Math.random() * 4; index++) {
+        obstacles.push( new Obstacle(Math.random() * 300,Math.random()*  300, bird_hurted, 50));
+    }
     let devTouch;
     if (DetectMobile() == true) 
         devTouch = "touchstart";
@@ -418,6 +483,7 @@ function Init() {
             x : Math.cos(angle),
             y : Math.sin(angle)
         }, 15 ));
+        pew.play();
             
           }, false);
 
@@ -427,23 +493,6 @@ function Init() {
 
             var xDiff = tchX - xUp;
             var yDiff = tchY - yUp;
-
-            /*if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {//
-                if ( xDiff > 0 ) {
-                    player.x -= 5; 
-                } else {
-                    player.x += 5;
-                }                       
-            } else {
-                if ( yDiff > 0 ) {
-                    player.y += 5;
-                } else { 
-                    player.y -= 5;
-                }                                                                 
-            }
-            
-            xDown = null;
-            yDown = null;  */
             player.IncCoordBy((-1) * xDiff % 2, (-1) * yDiff % 2);
             //player.x += (-1) * xDiff % 2;
             //player.y += (-1) * yDiff % 2;  
@@ -471,24 +520,28 @@ function Init() {
             x : Math.cos(angle),
             y : Math.sin(angle)
         }, 15 )); 
+    pew.play();
     });
     
     
     }
     startBtn.addEventListener(devTouch, () =>  {
-        //alert(GAME_START);
+        bgS.play();
         console.log('start');
         enemies.splice(0, enemies.length);
         Projectiles.splice(0, Projectiles.length);
         player.hp = 3;
-        console.log("залупа нажата блять");
         ModWind.style.display = 'none';
+        IsBossSpawned = false;
         setTimeout( ()=> {
             draw();
             player.x = cvs.width / 2;
             player.y = cvs.height / 2;
-            spawnEntities();
+            spawnEntities(bird_enemy, 50, 1000);
             GAME_START = true;
+            IsBossSpawned = false;
+            player.hp = 3;
+            boss_time = false;
         }, 50);
         
     });
@@ -496,3 +549,4 @@ function Init() {
 }
 
 Init();
+
