@@ -28,6 +28,8 @@ var kurt = new Image();
 var bird_enemy = new Image();
 var bird_hurted = new Image();
 var bird_boss = new Image();
+var bomb1 = new Image();
+var bomb_obst = new Image();
 
 bird.src = "images/bird.png";
 bg.src = "images/bg.png";
@@ -36,6 +38,8 @@ kurt.src = "images/kurt.png";
 bird_enemy.src = "images/bird_enemy.png";
 bird_hurted.src = "images/bird_hurted.png";
 bird_boss.src = "images/bird_boss.png";
+bomb1.src = "images/bomb1.png";
+bomb_obst.src = "images/bomb_obst.png";
 
 var pew = new Audio();
 var bgS = new Audio();
@@ -48,6 +52,8 @@ bgS.src = "sounds/back.mp3";
 touch.src = "sounds/touch.mp3";
 damageS.src = "sounds/damage.mp3";
 boss_music.src = "sounds/boss_music.mp3";
+
+
 
 class Entity {
     constructor(x, y, sprite, hitbox){
@@ -256,15 +262,15 @@ var boss_time = false;
 function spawnBoss() {
     boss_time = true;
     boss_music.play();
-    for (let index = 0; index < 20; index++) {
+    for (let index = 0; index < 30; index++) {
         let x;
         let y;
         if (Math.random() < 0.5) {
-            x = Math.random() < 0.5 ? 0 - 20 :  cvs.width + 30;
-            y = Math.random() < 0.5 ? 0 - 20:  cvs.height + 30;
+            x = Math.random() < 0.5 ? 0 - 25 :  cvs.width + 30;
+            y = Math.random() < 0.5 ? 0 - 25:  cvs.height + 30;
         } else {
             x = Math.random() * cvs.width;
-            y = Math.random() < 0.5 ? 0 - 20 : cvs.height + 30;
+            y = Math.random() < 0.5 ? 0 - 30 : cvs.height + 30;
         }
 
         const angle = Math.atan2(player.y - y, 
@@ -280,7 +286,7 @@ function spawnBoss() {
 }
 function spawnEntities(spr, hp, interval) {
     setInterval(() => {
-        if (enemies.length > 15) {
+        if (enemies.length > 20) {
             return;
         }
         let x;
@@ -306,13 +312,10 @@ function spawnEntities(spr, hp, interval) {
 }
 
 let animationID;
-setInterval( ()=> {
-    console.log(player.hp);
-}, 2000);
+
 var invisForGM = false;
 var IsBossSpawned = false;
 function draw(){
-    //console.log(document.hasFocus());
     animationID = requestAnimationFrame(draw);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, cvs.width, cvs.height);
@@ -327,8 +330,6 @@ function draw(){
 
     player.draw();
     
-    //console.log(player.x, player.y);
-    //console.log(enemies);
     Projectiles.forEach((proj, idx) => {
         proj.update();
         if (proj.x - proj.hitbox < 0 || proj.getHitboxCoorX() > cvs.width
@@ -356,7 +357,7 @@ function draw(){
         en.update(1, 1);
         const dist = Math.hypot(player.getHitboxCoorX() - en.getHitboxCoorX(),
         player.getHitboxCoorY() - en.getHitboxCoorY());
-        //console.log(dist);
+        
         //handle end game
         if (dist < 30) {
             touch.play();
@@ -370,8 +371,16 @@ function draw(){
                 endGameSc.innerHTML = score;
                 ModWind.style.display = 'flex';
                 GAME_START = false;
-                score = 0;
+                
             }
+        }
+        if (player.hp < 0 ) {
+                player.Hurt(en.damage);
+                cancelAnimationFrame(animationID);
+                endGameSc.innerHTML = score;
+                ModWind.style.display = 'flex';
+                GAME_START = false;
+                
         }
         Projectiles.forEach((projectile, projectl_idx) => {
             //distance between
@@ -441,7 +450,7 @@ var yDown = null;
 
 function Init() {
     for (let index = 0; index < Math.random() * 4; index++) {
-        obstacles.push( new Obstacle(Math.random() * 300,Math.random()*  300, bird_hurted, 50));
+        obstacles.push( new Obstacle(Math.random() * 300,Math.random()*  300, bomb_obst, 50));
     }
     let devTouch;
     if (DetectMobile() == true) 
@@ -478,11 +487,11 @@ function Init() {
             );
     
     Projectiles.push(new Projectile(player.x,
-        player.y, bird, 
+        player.y, bomb1, 
         {
-            x : Math.cos(angle),
-            y : Math.sin(angle)
-        }, 15 ));
+            x : Math.cos(angle) * 3,
+            y : Math.sin(angle) * 3
+        }, 10 ));
         pew.play();
             
           }, false);
@@ -515,10 +524,10 @@ function Init() {
             );
     
     Projectiles.push(new Projectile(player.x,
-        player.y, bird, 
+        player.y, bomb1, 
         {
-            x : Math.cos(angle),
-            y : Math.sin(angle)
+            x : Math.cos(angle) * 3,
+            y : Math.sin(angle) * 3
         }, 15 )); 
     pew.play();
     });
@@ -533,6 +542,8 @@ function Init() {
         player.hp = 3;
         ModWind.style.display = 'none';
         IsBossSpawned = false;
+        score = 0;
+        boss_music.pause();
         setTimeout( ()=> {
             draw();
             player.x = cvs.width / 2;
