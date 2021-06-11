@@ -7,7 +7,8 @@ if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigat
     return false;
   }
 }
-var score_for_boss = 30;
+
+var score_for_boss = 66;
 var ModWind = document.querySelector('#ModalWind');
 var startBtn = document.querySelector('#startGameBtn');
 var endGameSc = document.querySelector('#endScoreUI');
@@ -20,11 +21,8 @@ cvs.height = innerHeight - 5;
 
 var obstacles = [];
 
-
+/* SETUP SPRITES */
 var bird = new Image();
-var bg = new Image();
-var fg = new Image();
-var kurt = new Image();
 var bird_enemy = new Image();
 var bird_hurted = new Image();
 var bird_boss = new Image();
@@ -32,15 +30,13 @@ var bomb1 = new Image();
 var bomb_obst = new Image();
 
 bird.src = "images/bird.png";
-bg.src = "images/bg.png";
-fg.src = "images/fg.png";
-kurt.src = "images/kurt.png";
 bird_enemy.src = "images/bird_enemy.png";
 bird_hurted.src = "images/bird_hurted.png";
 bird_boss.src = "images/bird_boss.png";
 bomb1.src = "images/bomb1.png";
 bomb_obst.src = "images/bomb_obst.png";
 
+/* SETUP AUDIO */
 var pew = new Audio();
 var bgS = new Audio();
 var touch = new Audio();
@@ -53,7 +49,7 @@ touch.src = "sounds/touch.mp3";
 damageS.src = "sounds/damage.mp3";
 boss_music.src = "sounds/boss_music.mp3";
 
-
+/* END SETUP AUDIO */
 
 class Entity {
     constructor(x, y, sprite, hitbox){
@@ -96,9 +92,6 @@ class Entity {
 
 
 var bird_b;
-
-function SpawnBoss() { 
-}
 
 class Player extends Entity {
     constructor(x, y, sprite, hp, damage, side, velocity, hitbox) {
@@ -159,9 +152,6 @@ class Projectile extends Entity {
         this.draw();
         this.x = this.x + this.velocity.x;
         this.y = this.y + this.velocity.y;
-        //ctx.beginPath();
-        //ctx.arc(this.getHitboxCoorX(),this.getHitboxCoorY(), this.hitbox, 0, Math.PI * 2, true);
-        //  ctx.fill();
     }
 } 
 
@@ -199,28 +189,9 @@ class Blood extends Projectile {
 
 var player = new ClientPlayer(cvs.width / 2, cvs.height / 2, bird,
     3, 40, 1, null, 15);
-// some variables
-
-var gap = 85;
-var constant;
-
-var bX = 10;
-var bY = 150;
-
-var gravity = 1.5;
 
 var score = 0;
 var best_score = 0;
-
-// audio files
-
-var fly = new Audio();
-var scor = new Audio();
-
-fly.src = "sounds/fly.mp3";
-scor.src = "sounds/score.mp3";
-
-
 
 // on key down
 function keyDownHandler(e) {
@@ -248,10 +219,6 @@ function moveUp(){
     bY -= 25;
     fly.play();
 }
-
-// pipe coordinates
-
-var pipe = [];
 
 var Projectiles = [];
 var Bloods = [];
@@ -438,11 +405,6 @@ function draw(){
     //console.log(GAME_START);
 }
 
-
-
-function HndTouch(event) {
-    
-}
 var clientX, clientY;
 var tchX, tchY;
 var xDown = null;                                                        
@@ -544,6 +506,7 @@ function Init() {
         IsBossSpawned = false;
         score = 0;
         boss_music.pause();
+        setTimeout( () => {player.hp = 3}, 2000);
         setTimeout( ()=> {
             draw();
             player.x = cvs.width / 2;
@@ -551,7 +514,6 @@ function Init() {
             spawnEntities(bird_enemy, 50, 1000);
             GAME_START = true;
             IsBossSpawned = false;
-            player.hp = 3;
             boss_time = false;
         }, 50);
         
